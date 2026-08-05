@@ -148,16 +148,25 @@ before any hardware exists.
 - PID integrators reset on disarm, so no lurch on the next arm.
 - NaN or a failed sensor read cannot poison the attitude estimate.
 
-## Two things the design files forced
+## What the design files forced
 
-**1. The IMU cannot use hardware SPI1.** On this board `PA6` carries the IMU's
-data-*in* and `PA7` its data-*out*, but the F405 fixes PA6 = `SPI1_MISO` and
-PA7 = `SPI1_MOSI` and has no swap bit. Hardware SPI1 would drive MOSI into the
-IMU's output. The IMU therefore needs a bit-banged GPIO master. This is why
-`SpiBus` is an interface. Full detail in [docs/PINOUT.md](docs/PINOUT.md).
+**1. No SPI bus on this board can use the hardware peripheral.** On this board
+`PA6` carries the IMU's data-*in* and `PA7` its data-*out*, but the F405 fixes
+PA6 = `SPI1_MISO` and PA7 = `SPI1_MOSI` and has no swap bit. Hardware SPI1 would
+drive MOSI into the IMU's output. The IMU therefore needs a bit-banged GPIO
+master — which is why `SpiBus` is an interface. **SPI2 (flash) and SPI3 (OSD) are
+transposed the same way**, so a blackbox or OSD driver will need the same
+treatment. Full detail in [docs/PINOUT.md](docs/PINOUT.md).
 
 **2. There is no magnetometer on the F405's bus,** so yaw is gyro-only and will
 drift. The MMC5983MA is on a separate I2C bus in the GPS power island.
+
+**3. Most of the board is not wired to the MCU.** `FCSTMV1.05` is one KiCad
+project holding several electrically separate sub-circuits joined by solder pads
+at assembly. Only the IMU, the BMP390 and the SPI flash share a net with the
+F405. The ESCs, GPS, magnetometer, OSD, VTX, BLE and receiver all terminate on
+headers — including the four onboard `STM32F051C8T6` ESC MCUs, which are
+unconnected *and* have no firmware in this repository.
 
 ## The STM32 platform layer
 
@@ -209,11 +218,19 @@ Stated plainly rather than stubbed out:
   be measured on an assembled board, because divider tolerance dominates the
   error. Until then reported voltages will be wrong, and the low-voltage
   failsafe thresholds with them.
-- **Barometer and GPS drivers are not written.**
+- **Barometer and GPS drivers are not written.** The BMP390 is on I2C1 at address
+  `0x77`, but its CSB strap (`R128`) is not fitted, so CSB must be tied high at
+  `J152.1` before it will respond at all. The onboard SAM-M10Q is not wired to
+  USART6.
+- **There is no ESC firmware, and the ESCs are not connected.** Four bare
+  `STM32F051C8T6`s, with `/S1`–`/S4` and each ESC's `PA2` on separate solder
+  pads. Nothing can drive a motor until this is resolved one way or the other.
 - **The bit-banged SPI half-bit delay is a guess.** `kNopsPerHalfBit = 8` is a
   starting point; the real half-period depends on flash wait states and bus
   contention and must be checked with a scope against the ICM-42688-P's 24 MHz
-  register-access limit.
+  register-access limit. From instruction timing it should land around
+  5.5–7 MHz, putting a 15-byte burst read at roughly 20–25 µs (~2 % of a 1 kHz
+  loop), but that is an estimate and not a measurement.
 - **Loop timing budget is unmeasured.** The bit-banged SPI cost in particular
   needs a scope before the 1 kHz loop rate can be trusted.
 

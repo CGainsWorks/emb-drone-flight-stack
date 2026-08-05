@@ -45,14 +45,27 @@ from `firmware/test_summary.sh`.
 - 221 tests, 183,846 assertions, 0 failures, all running on a host with no
   board attached
 
-Two constraints the design files imposed, both documented in
+Constraints the design files imposed, all documented in
 `firmware/docs/PINOUT.md`:
 
+- `FCSTMV1.05` is one KiCad project holding several electrically separate
+  sub-circuits, joined by solder pads at assembly rather than by copper. Only
+  three peripherals share a net with the F405: the ICM-42688-P IMU, the BMP390
+  barometer and the W25Q128JV flash. The ESCs, GPS, magnetometer, OSD, VTX, BLE
+  and receiver all terminate on headers.
 - The IMU cannot be driven by the F405 hardware SPI1 peripheral as routed. PA6
   carries the IMU's data-in and PA7 its data-out, but the F405 fixes PA6 to
   SPI1_MISO and PA7 to SPI1_MOSI and has no swap bit. A bit-banged GPIO master
   is required on this board revision.
+- The same transposition applies to **SPI2 (flash) and SPI3 (OSD)**, verified
+  from device pin direction. Any blackbox or OSD driver will need the same
+  bit-banged master. Neither driver is written, so nothing is broken today.
+- The IMU's INT1 is not routed to the F405, so there is no data-ready
+  interrupt and sampling must be paced by a timer. The barometer's INT is not
+  routed either.
 - The magnetometer is not on the F405's bus, so yaw is gyro-only and will drift.
+- The barometer's CSB strap (`R128`) is **not fitted**, so its interface mode is
+  undefined until CSB is strapped high at `J152.1`. Its I2C address is `0x77`.
 
 **Firmware, STM32 platform layer.** Written and cross-compiling. Build with
 `firmware/build_firmware.sh`; check the linked image with
@@ -85,7 +98,16 @@ RM0090 Table 43, which could not be confirmed against a primary source. PWM
 output is implemented instead as the first bring-up path, because it needs no
 DMA.
 
-**Barometer and GPS drivers.** Not written.
+**ESC firmware.** The board carries four `STM32F051C8T6` ESC MCUs. They have no
+firmware anywhere in this repository, and their signal inputs are not connected
+to the F405 on copper — `/S1`–`/S4` and each ESC's `PA2` land on separate solder
+pads. Before any motor can turn, either both gaps have to be closed (a wiring map
+plus BLDC firmware for four F051s) or the onboard ESCs have to be bypassed in
+favour of external ones. **This is the riskiest open item on the project**, and it
+is a prerequisite for tethered hover, not a detail of it.
+
+**Barometer and GPS drivers.** Not written. Note also that the onboard SAM-M10Q
+is not wired to USART6; the GPS port reaches `J129` pads only.
 
 **Calibration constants.** The battery divider ratio and the bit-banged SPI
 half-bit delay are both defaults rather than measurements, and the PID gains
