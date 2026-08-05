@@ -9,6 +9,8 @@
 
 #include "fc/config/board_v105.hpp"
 #include "fc/control/flight_controller.hpp"
+#include "fc/diagnostics/spi_benchmark.hpp"
+#include "fc/diagnostics/timing_stats.hpp"
 #include "fc/drivers/crsf.hpp"
 #include "fc/drivers/icm42688.hpp"
 #include "fc/sensors/battery.hpp"
@@ -55,8 +57,50 @@ FlightController g_fc{g_imu, g_motors, g_clock};
 crsf::Parser g_crsf;
 TelemetryTransmitter g_telemetry{g_telemetry_uart};
 
+TimingStats g_loop_stats{board::kControlLoopPeriodUs};
+
 constexpr uint32_t kCrsfBaud = 420000u;
 constexpr uint32_t kTelemetryBaud = 115200u;
+
+// --- plain-text diagnostics -------------------------------------------
+//
+// Emitted on the telemetry UART so the bring-up numbers can be read with
+// nothing but a USB-serial adapter. Deliberately hand-rolled rather than
+// printf: pulling in stdio would cost more flash than the whole control loop.
+
+void uart_write_blocking(Uart& uart, const char* text) {
+    // Bounded: a disconnected or wedged port must not hang the board.
+    for (const char* p = text; *p != '\0'; ++p) {
+        const uint8_t byte = static_cast<uint8_t>(*p);
+        for (int attempt = 0; attempt < 1000; ++attempt) {
+            if (uart.write(&byte, 1) == 1) {
+                break;
+            }
+            g_clock.delay_us(10);
+        }
+    }
+}
+
+void uart_write_u32(Uart& uart, uint32_t value) {
+    char buf[12];
+    int i = 11;
+    buf[i--] = '\0';
+    if (value == 0) {
+        buf[i--] = '0';
+    }
+    while (value > 0 && i >= 0) {
+        buf[i--] = static_cast<char>('0' + (value % 10u));
+        value /= 10u;
+    }
+    uart_write_blocking(uart, &buf[i + 1]);
+}
+
+void report_line(const char* label, uint32_t value, const char* unit) {
+    uart_write_blocking(g_telemetry_uart, label);
+    uart_write_u32(g_telemetry_uart, value);
+    uart_write_blocking(g_telemetry_uart, unit);
+    uart_write_blocking(g_telemetry_uart, "\r\n");
+}
 
 void configure_pins() {
     stm32::enable_gpio_clocks();
@@ -157,11 +201,30 @@ int main() {
     stm32::set_usart1_instance(&g_rx_uart);
     stm32::nvic_enable_irq(stm32::kIrqUsart1);
 
+    uart_write_blocking(g_telemetry_uart, "\r\n=== FCSTMV1.05 boot ===\r\n");
+
     if (!g_fc.init()) {
         // The IMU did not answer. Most likely causes on this board: the
         // bit-banged SPI timing, or the PA6/PA7 routing described in
         // docs/PINOUT.md.
+        uart_write_blocking(g_telemetry_uart, "IMU: NO RESPONSE (WHO_AM_I mismatch)\r\n");
         fault_loop();
+    }
+    uart_write_blocking(g_telemetry_uart, "IMU: ok\r\n");
+
+    // Characterise the bit-banged SPI using the MCU's own microsecond counter.
+    // This is what replaces putting a scope on the clock line for the purposes
+    // of the loop budget: it measures the real end-to-end cost of a burst,
+    // including chip-select overhead.
+    {
+        const SpiBenchmarkResult spi = benchmark_spi(g_spi, g_clock, 200, 15);
+        if (spi.valid) {
+            report_line("SPI effective bitrate: ", spi.effective_bitrate_hz, " Hz");
+            report_line("SPI burst (15 bytes):  ", spi.burst_us, " us");
+        } else {
+            uart_write_blocking(g_telemetry_uart,
+                                "SPI benchmark: too fast to measure at 1 us\r\n");
+        }
     }
 
     if (!g_fc.calibrate_gyro()) {
@@ -178,6 +241,11 @@ int main() {
     }
     g_battery.detect_cell_count();
 
+    report_line("Battery cells detected: ", g_battery.cell_count(), "S");
+    report_line("Pack voltage (mV):      ", static_cast<uint32_t>(g_battery.voltage() * 1000.0f), "");
+    report_line("Loop budget:            ", board::kControlLoopPeriodUs, " us");
+    uart_write_blocking(g_telemetry_uart, "=== running ===\r\n");
+
     set_led(true);
 
     uint32_t next_cycle = g_clock.micros();
@@ -192,6 +260,8 @@ int main() {
         }
         next_cycle += board::kControlLoopPeriodUs;
 
+        const uint32_t work_start = g_clock.micros();
+
         g_adc.poll();
         g_battery.update(g_adc.vbat_counts(), g_adc.current_counts(),
                          static_cast<float>(board::kControlLoopPeriodUs) * 1e-6f);
@@ -200,6 +270,19 @@ int main() {
         pump_receiver();
         g_fc.update(now);
         g_telemetry.update(now, build_snapshot());
+
+        g_loop_stats.add(elapsed_us(g_clock.micros(), work_start));
+
+        // Report loop timing periodically, but only while disarmed: the text
+        // write must never share the loop with a flying aircraft.
+        if (g_fc.arming().state() == ArmState::Disarmed &&
+            g_loop_stats.count() >= 5000u) {
+            report_line("loop us  min=", g_loop_stats.min(), "");
+            report_line("         max=", g_loop_stats.max(), "");
+            report_line("        mean=", static_cast<uint32_t>(g_loop_stats.mean()), "");
+            report_line("    overruns=", g_loop_stats.overruns(), "");
+            g_loop_stats.reset();
+        }
 
         // Heartbeat: fast when armed, slow when disarmed.
         const uint32_t blink_period =

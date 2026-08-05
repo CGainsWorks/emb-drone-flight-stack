@@ -39,7 +39,10 @@ from `firmware/test_summary.sh`.
 - Rate-scheduled UART telemetry output, non-blocking, resumes partial writes
 - Battery monitoring: divider scaling, cell-count detection, mAh integration
 - Arming and failsafe state machine
-- 207 tests, 183,804 assertions, 0 failures, all running on a host with no
+- On-board diagnostics: SPI self-benchmark and control-loop timing statistics,
+  printed as plain text so bring-up needs a serial adapter rather than an
+  oscilloscope
+- 221 tests, 183,846 assertions, 0 failures, all running on a host with no
   board attached
 
 Two constraints the design files imposed, both documented in
@@ -59,8 +62,11 @@ the bit-banged SPI master, TIM1/TIM8 PWM ESC output, interrupt-driven UART and
 a non-blocking ADC. No vendor HAL or CMSIS dependency; the register definitions
 are written by hand.
 
-Image size, from `arm-none-eabi-size`: 21,036 B flash (2.01 % of 1 MB) and
-5,720 B RAM (4.36 % of 128 KB).
+Image size, from `arm-none-eabi-size`: 24,160 B flash (2.30 % of 1 MB) and
+5,752 B RAM (4.39 % of 128 KB).
+
+A written bring-up procedure exists at `firmware/docs/BRING_UP.md`. It has not
+been performed.
 
 None of it has been executed on silicon.
 

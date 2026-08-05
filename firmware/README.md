@@ -54,6 +54,7 @@ Current result — every number quoted in this file comes from that script:
 | `test_battery` | 19 | 536 |
 | `test_bitbang_spi` | 17 | 6,555 |
 | `test_crsf` | 23 | 124 |
+| `test_diagnostics` | 14 | 42 |
 | `test_dshot` | 17 | 15,148 |
 | `test_flight_controller` | 22 | 24,074 |
 | `test_imu` | 18 | 78 |
@@ -61,7 +62,7 @@ Current result — every number quoted in this file comes from that script:
 | `test_mixer` | 11 | 131,264 |
 | `test_pid` | 14 | 5,028 |
 | `test_telemetry` | 13 | 30 |
-| **Total** | **207** | **183,804** |
+| **Total** | **221** | **183,846** |
 
 Zero failures. The large assertion counts are exhaustive sweeps: every DShot
 value 0–2047 has its CRC verified the way an ESC would, every byte value is
@@ -80,11 +81,11 @@ Current image (from `arm-none-eabi-size`, reproduced by the script):
 
 | Region | Used | Available | Usage |
 |---|---|---|---|
-| FLASH | 21,036 B | 1 MB | 2.01 % |
-| RAM | 5,720 B | 128 KB | 4.36 % |
+| FLASH | 24,160 B | 1 MB | 2.30 % |
+| RAM | 5,752 B | 128 KB | 4.39 % |
 | CCM | 0 B | 64 KB | 0 % |
 
-`text 20,840 · data 196 · bss 5,528`. Outputs are `fc_firmware.elf`, `.bin` and
+`text 23,964 · data 196 · bss 5,560`. Outputs are `fc_firmware.elf`, `.bin` and
 `.hex` in `build-arm/`.
 
 ### Verifying the image without a board
@@ -117,6 +118,7 @@ All checks currently pass. This still does not mean the firmware runs.
 | CRSF | `drivers/crsf.cpp` | RC parsing, telemetry frames, idle-gap resync |
 | Telemetry | `telemetry/telemetry.cpp` | Rate-scheduled CRSF output, non-blocking, resumes partial writes |
 | Battery monitor | `sensors/battery.cpp` | Divider scaling, cell-count detection, current integration to mAh |
+| Diagnostics | `diagnostics/` | Loop timing statistics and SPI self-benchmark, reported as plain text on boot |
 | Arming / failsafe | `state/arming.cpp` | See safety properties below |
 | Loop integration | `control/flight_controller.cpp` | Angle and Rate modes, tested end to end against mocks |
 
@@ -217,22 +219,20 @@ Stated plainly rather than stubbed out:
 
 ## Next steps
 
-Everything below needs hardware.
+Everything remaining needs a physical board. The full procedure, with expected
+values and failure modes, is in [docs/BRING_UP.md](docs/BRING_UP.md).
 
-1. Bench bring-up in order: SWD connection, clock (check 168 MHz on an output),
-   LED heartbeat, then IMU `WHO_AM_I`. The heartbeat blink rate and the
-   `fault_loop()` blink in `main.cpp` are the only diagnostics until telemetry
-   is up.
-2. Scope the bit-banged SPI clock and tune `kNopsPerHalfBit` against the
-   ICM-42688-P's 24 MHz register-access limit.
-3. Measure the actual loop time and confirm the 1 kHz budget holds with the
-   software SPI in the path.
-4. Measure the battery divider and set `voltage_divider_ratio`, then confirm the
-   low-voltage failsafe triggers where intended.
-5. Only then, props off and on a current-limited supply: first motor spin.
-6. Wire DShot DMA once PWM is proven, after confirming the request mapping.
-7. Tune the PID gains on a test rig. The current values have never driven a
-   motor.
+**The board measures itself, so most of it needs no oscilloscope.** On boot the
+firmware benchmarks its own SPI bus against the microsecond counter and prints
+the effective bitrate and burst time; while disarmed it prints loop timing
+statistics including a budget-overrun count. Both go out as plain text on UART5
+at 115200 baud, so a USB-serial adapter is enough to calibrate
+`kNopsPerHalfBit` and confirm the 1 kHz budget. A scope is only genuinely
+required for signal integrity (step 9).
+
+Summary of the order: SWD → clock → LED heartbeat → serial diagnostics → IMU
+`WHO_AM_I` → calibrate SPI rate → confirm loop budget → first motor spin (props
+off, current limited) → scope for signal integrity.
 
 ## Continuous integration
 
