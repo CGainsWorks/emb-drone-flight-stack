@@ -1,15 +1,31 @@
 # emb-drone-flight-stack
 
-> **Status: hardware design complete, firmware not started.**
+> **Status: hardware design complete. Firmware written and tested on host, but
+> never run on hardware.**
 > The 6-layer flight controller is designed through to fabrication-ready Gerbers
-> and assembly files. No firmware exists yet and the boards have not been
-> assembled, brought up or flown. See [STATUS.md](STATUS.md) for the precise
-> breakdown of what does and does not exist.
+> and assembly files. The firmware compiles for the STM32F405 and passes 221
+> host-side unit tests, but the boards have not been assembled, powered, brought
+> up or flown, so not one line of it has executed on silicon. There are no
+> measurements of any kind in this repository. See [STATUS.md](STATUS.md) for the
+> precise breakdown of what does and does not exist.
 
 Design files imported from [`OpenSourceDrone`](https://github.com/CGainsWorks/OpenSourceDrone),
 which remains the original working repository.
 
 A complete quadrotor built from nothing: a custom flight-controller PCB integrating the power stage with an STM32, a separate multi-layer power distribution board, and C++ firmware written from scratch with a PID attitude loop, IMU drivers, PWM and DShot ESC output and UART telemetry. This is the monorepo covering all three drone hardware and firmware entries on the CV.
+
+### Firmware
+
+| | |
+|---|---|
+| [`firmware/README.md`](firmware/README.md) | Architecture, how to build and run the tests, and what is deliberately not implemented |
+| [`firmware/docs/PINOUT.md`](firmware/docs/PINOUT.md) | The pinout as extracted from the PCB netlist, including why the IMU cannot use hardware SPI1 on this board |
+| [`firmware/docs/BRING_UP.md`](firmware/docs/BRING_UP.md) | Bring-up procedure with expected values. Not yet performed |
+
+```bash
+cd firmware && ./run_tests.sh        # host unit tests, no hardware needed
+cd firmware && ./build_firmware.sh   # STM32F405 image, needs arm-none-eabi-gcc
+```
 
 ---
 
@@ -121,17 +137,26 @@ Plus the standard baseline: `README.md`, `LICENSE`, `.gitignore`, `.gitattribute
 
 ## Build checklist
 
+Anything requiring a powered board is unchecked, because no board has been
+powered.
+
 - [ ] PDB schematic and layout
 - [ ] PDB fabrication and bench validation: efficiency, thermal, protection
-- [ ] Flight controller schematic with MCU pin-mux plan
-- [ ] Flight controller layout with a defined stackup
-- [ ] Fabrication and bring-up checklist executed
-- [ ] IMU driver over SPI with verified data
-- [ ] Attitude estimator with host-side unit tests
-- [ ] PID attitude loop with step-response tuning on a test rig
-- [ ] PWM and DShot ESC output
-- [ ] UART telemetry and ground-station plotting
-- [ ] Loop timing budget measured
+- [x] Flight controller schematic with MCU pin-mux plan
+- [x] Flight controller layout with a defined stackup
+- [ ] Fabrication and bring-up checklist executed — procedure written
+      ([firmware/docs/BRING_UP.md](firmware/docs/BRING_UP.md)), not performed
+- [ ] IMU driver over SPI with verified data — driver written and tested against
+      a simulated device; no data from real silicon
+- [x] Attitude estimator with host-side unit tests
+- [ ] PID attitude loop with step-response tuning on a test rig — loop written
+      and host-tested; gains are untuned defaults that have never driven a motor
+- [ ] PWM and DShot ESC output — PWM implemented; DShot frame encoding
+      implemented and tested, but its timer DMA is not wired up
+- [ ] UART telemetry and ground-station plotting — telemetry implemented; no
+      ground-station tool yet
+- [ ] Loop timing budget measured — the firmware measures and reports its own
+      loop timing, but nothing has run to measure
 - [ ] Tethered hover
 - [ ] Free flight and logged flight data
 
