@@ -1,0 +1,13 @@
+# Shell scripts must keep LF endings. Checked out with CRLF on Windows they
+# fail on Linux and in CI with "bad interpreter: /usr/bin/env bash^M".
+*.sh text eol=lf
+
+# Keep the rest of the firmware sources consistent across platforms.
+*.c    text eol=lf
+*.cpp  text eol=lf
+*.h    text eol=lf
+*.hpp  text eol=lf
+*.ld   text eol=lf
+*.cmake text eol=lf
+CMakeLists.txt text eol=lf
+*.md   text eol=lf

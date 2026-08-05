@@ -1,0 +1,13 @@
+# Host test build
+build/
+
+# Cross-compiled firmware build
+build-arm/
+
+# Build artefacts if produced outside the build directories
+*.o
+*.obj
+*.elf
+*.bin
+*.hex
+*.map

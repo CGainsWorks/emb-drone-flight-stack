@@ -23,18 +23,70 @@ README or on a CV overstates it. Update it as items move between sections.
 - Control link RX and TX, `hardware/rf/docs/`
 - Video link RX and TX, `hardware/rf/docs/`
 
+## In progress
+
+**Firmware, portable core.** Written and passing host-side tests. Nothing has
+run on hardware. Build and test with `firmware/run_tests.sh`; counts below come
+from `firmware/test_summary.sh`.
+
+- IMU driver for the ICM-42688-P over an abstract SPI bus
+- Bit-banged SPI mode 3 master, required by the pin routing described below,
+  verified against a bit-level slave model that decodes the actual waveform
+- Attitude estimator, Mahony complementary filter with gyro-bias estimation
+- PID attitude loop, angle and rate modes, with quad-X mixer
+- DShot frame, CRC and timing encoding for 150/300/600/1200
+- CRSF receiver parsing and telemetry frame construction
+- Rate-scheduled UART telemetry output, non-blocking, resumes partial writes
+- Battery monitoring: divider scaling, cell-count detection, mAh integration
+- Arming and failsafe state machine
+- 207 tests, 183,804 assertions, 0 failures, all running on a host with no
+  board attached
+
+Two constraints the design files imposed, both documented in
+`firmware/docs/PINOUT.md`:
+
+- The IMU cannot be driven by the F405 hardware SPI1 peripheral as routed. PA6
+  carries the IMU's data-in and PA7 its data-out, but the F405 fixes PA6 to
+  SPI1_MISO and PA7 to SPI1_MOSI and has no swap bit. A bit-banged GPIO master
+  is required on this board revision.
+- The magnetometer is not on the F405's bus, so yaw is gyro-only and will drift.
+
+**Firmware, STM32 platform layer.** Written and cross-compiling. Build with
+`firmware/build_firmware.sh`; check the linked image with
+`firmware/verify_image.sh`. Includes startup and vector table, linker script,
+168 MHz PLL from the 8 MHz crystal, TIM2 as a 32-bit microsecond clock, GPIO,
+the bit-banged SPI master, TIM1/TIM8 PWM ESC output, interrupt-driven UART and
+a non-blocking ADC. No vendor HAL or CMSIS dependency; the register definitions
+are written by hand.
+
+Image size, from `arm-none-eabi-size`: 21,036 B flash (2.01 % of 1 MB) and
+5,720 B RAM (4.36 % of 128 KB).
+
+None of it has been executed on silicon.
+
+**Continuous integration.** `.github/workflows/ci.yml` builds and runs the host
+test suite, cross-compiles the firmware and verifies the linked image.
+
 ## Not started
 
-**Firmware.** No code exists yet. Nothing in `firmware/` beyond the directory
-structure. This is the largest gap in the project and the next thing to build.
-Required at minimum:
+**Hardware execution.** The firmware compiles, links and passes structural
+checks on the linked image, but no line of it has run on a real board. The PID
+gains in the source are structurally sensible placeholders, not tuned values.
 
-- IMU driver over SPI
-- Attitude estimator
-- PID attitude loop
-- PWM or DShot ESC output
-- UART telemetry
-- Arming and failsafe state machine
+**DShot ESC output.** The encoder is written and unit-tested, but the timer DMA
+is deliberately not wired up: doing so needs the DMA2 request mapping from
+RM0090 Table 43, which could not be confirmed against a primary source. PWM
+output is implemented instead as the first bring-up path, because it needs no
+DMA.
+
+**Barometer and GPS drivers.** Not written.
+
+**Calibration constants.** The battery divider ratio and the bit-banged SPI
+half-bit delay are both defaults rather than measurements, and the PID gains
+have never driven a motor. All three need an assembled board.
+
+**Loop timing budget.** Unmeasured. The bit-banged SPI cost needs a scope before
+the 1 kHz loop rate can be trusted.
 
 **Board bring-up.** The boards have not been assembled or powered. No bring-up
 has been performed, so nothing about the design is yet validated in hardware.
@@ -53,8 +105,10 @@ Use this wording, or something equally accurate, wherever the project is describ
 
 > A 6-layer impedance-controlled quadrotor flight controller taken from schematic
 > through to fabrication-ready Gerbers and assembly files, with ESC and RF link
-> subsystems designed at schematic level. Firmware and hardware bring-up are in
-> progress.
+> subsystems designed at schematic level. The portable half of the C++ firmware
+> (attitude estimation, PID control, ESC and radio protocol codecs, arming and
+> failsafe logic) is written and covered by host-side unit tests; the STM32
+> platform layer and hardware bring-up are still to do.
 
 Do not describe the aircraft as built, tested or flown until the corresponding
 sections above have moved to Complete.
