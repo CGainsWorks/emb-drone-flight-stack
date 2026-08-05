@@ -1,7 +1,13 @@
 # emb-drone-flight-stack
 
-> **Status: planned. This repository is a brief, not an implementation.**
-> Nothing here is built yet. The sections below define what goes in it.
+> **Status: hardware design complete, firmware not started.**
+> The 6-layer flight controller is designed through to fabrication-ready Gerbers
+> and assembly files. No firmware exists yet and the boards have not been
+> assembled, brought up or flown. See [STATUS.md](STATUS.md) for the precise
+> breakdown of what does and does not exist.
+
+Design files imported from [`OpenSourceDrone`](https://github.com/CGainsWorks/OpenSourceDrone),
+which remains the original working repository.
 
 A complete quadrotor built from nothing: a custom flight-controller PCB integrating the power stage with an STM32, a separate multi-layer power distribution board, and C++ firmware written from scratch with a PID attitude loop, IMU drivers, PWM and DShot ESC output and UART telemetry. This is the monorepo covering all three drone hardware and firmware entries on the CV.
 

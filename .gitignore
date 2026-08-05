@@ -1,0 +1,19 @@
+# KiCad
+*-backups/
+*.kicad_prl
+fp-info-cache
+*.bak
+*~
+
+# Build
+firmware/build/
+firmware/.pio/
+*.o
+*.elf
+*.bin
+*.hex
+*.map
+
+# OS
+.DS_Store
+Thumbs.db
