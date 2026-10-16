@@ -58,7 +58,7 @@ bool Mmc5983::measure(int32_t out[3]) {
         return false;
     }
     // 8 ms conversion at the 100 Hz bandwidth setting; poll rather than
-    // sleep the whole time, and give up after a generous bound.
+    // sleep the whole time and give up after a generous bound.
     bool done = false;
     for (int i = 0; i < 20 && !done; ++i) {
         clock_.delay_us(1000);

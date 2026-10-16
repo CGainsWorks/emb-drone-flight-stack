@@ -47,7 +47,7 @@ Firmware Boots And Brings Up The IMU Over Bit-Banged SPI
     Wait For Line On Uart    SPI burst    timeout=5
     Wait For Line On Uart    Loop budget:\\s+1000 us    timeout=5    treatAsRegex=true
     Wait For Line On Uart    === running ===    timeout=5
-    # One soft reset from Icm42688::init, and every transaction framed on
+    # One soft reset from Icm42688::init and every transaction framed on
     # whole bytes with SCK parked high before CS fell.
     Imu Counter Should Be    SoftResets    1
     Imu Counter Should Be    ProtocolErrors    0

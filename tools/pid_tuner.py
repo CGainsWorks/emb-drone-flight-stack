@@ -53,7 +53,7 @@ def gains_to_args(g):
 
 
 # The tuner scores every candidate on the nominal plant and on a deliberately
-# slower, heavier one, and keeps the worse score. CI checks the same variant,
+# slower, heavier one and keeps the worse score. CI checks the same variant,
 # so the committed gains have to carry some margin rather than fit one model.
 PERTURBED = ["--motor-tau", "0.045", "--inertia-scale", "1.3"]
 
@@ -99,7 +99,7 @@ def activity(metrics):
 def robust_cost(nominal, perturbed, reference_activity):
     """Worse of the two plants, plus a price on motor command activity in
     hover: sensor noise pushed through high gains is heat and wear on a real
-    aircraft, and the model cannot see either."""
+    aircraft and the model cannot see either."""
     ratio = activity(nominal) / reference_activity
     cost = max(total_cost(nominal), total_cost(perturbed)) + 0.5 * ratio
     if ratio > 3.0:
@@ -118,7 +118,7 @@ def all_pass(metrics):
 # --------------------------------------------------------------------------
 # Search
 #
-# Roll and pitch share gains: the assumed airframe is symmetric, and tuning
+# Roll and pitch share gains: the assumed airframe is symmetric and tuning
 # them apart would only fit noise in the model.
 
 PARAMS = [

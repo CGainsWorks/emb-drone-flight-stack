@@ -135,7 +135,7 @@ std::vector<Scenario> standard_scenarios() {
 }
 
 // Requirements, not results: chosen before tuning as what a small quad's
-// attitude loops should achieve, and left alone afterwards.
+// attitude loops should achieve and left alone afterwards.
 StepLimits limits_for(const Scenario& s) {
     if (judged_on_estimate(s)) {
         return {20.0, 1.0, 5.0};  // angle: settle inside 1 s

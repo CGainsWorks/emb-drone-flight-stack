@@ -11,7 +11,7 @@ namespace fc {
 // MEMSIC MMC5983MA 3-axis magnetometer, board reference IC10 on FCSTMV1.05.
 //
 // On this board revision the part sits on /I2C_SCL_2 and /I2C_SDA_2 inside the
-// GPS power island, which does not reach the F405, and its bus pull-ups are not
+// GPS power island, which does not reach the F405 and its bus pull-ups are not
 // fitted (docs/PINOUT.md). The driver is written against the I2cBus interface
 // so it is ready for a revision that wires it, or for an external compass; on
 // the current board yaw remains gyro-only.

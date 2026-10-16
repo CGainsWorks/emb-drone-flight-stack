@@ -123,7 +123,7 @@ namespace Antmicro.Renode.Peripherals.Sensors
         // every pin of the port and rewriting all sixteen, inputs included. When
         // the SCK edge in that write makes this model change SDO, the rewrite of
         // pin 7 that follows restores the stale level. The port's pin 7 output
-        // is therefore wired back to input 3, and any level that disagrees with
+        // is therefore wired back to input 3 and any level that disagrees with
         // what the device is driving is corrected on the spot. Upstream Renode
         // has since made the port mode aware, after which this path never fires.
         private void DriveSdo()

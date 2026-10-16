@@ -38,7 +38,7 @@ TEST(baro_init_resets_identifies_and_configures) {
 
 TEST(baro_init_fails_when_csb_is_left_floating) {
     // R128 is not fitted on FCSTMV1.05: until CSB is strapped the part does
-    // not acknowledge on I2C, and the driver must say so.
+    // not acknowledge on I2C and the driver must say so.
     Rig rig;
     rig.dev.responds = false;
     CHECK(!rig.baro.init());

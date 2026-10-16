@@ -3,7 +3,7 @@
 // Simulated MMC5983MA on an I2C bus, for host tests only.
 //
 // Models what the driver relies on: the register map, single-shot 18-bit
-// conversions that take a few status polls to complete, and a bridge offset
+// conversions that take a few status polls to complete and a bridge offset
 // that stays put while the sensed field changes sign between the SET and
 // RESET states. Field values and offsets are whatever a test sets.
 

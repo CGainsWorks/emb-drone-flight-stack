@@ -3,7 +3,7 @@
 // Simulated BMP390 on an I2C bus, for host tests only.
 //
 // It answers at its 7-bit address with the part's register map, holds a set
-// of trimming coefficients in "NVM", and turns a true pressure and temperature
+// of trimming coefficients in "NVM" and turns a true pressure and temperature
 // into the raw 24-bit ADC values that the datasheet compensation maps back to
 // them. The coefficients are SYNTHETIC: chosen to be well conditioned over
 // 30 to 125 kPa and -40 to 85 degC, not copied from any real part.
