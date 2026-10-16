@@ -10,11 +10,14 @@ struct MixRow {
 };
 
 // Order matches the documented index -> position mapping in mixer.hpp.
+// Columns are the thrust change that produces a positive moment about each
+// axis: +roll (right side down) needs the left motors, +pitch (nose up) needs
+// the front motors, +yaw (nose right) needs the CCW props.
 constexpr MixRow kQuadX[kMotorCount] = {
-    {-1.0f, -1.0f, +1.0f},  // 0 front-right, CCW
-    {-1.0f, +1.0f, -1.0f},  // 1 rear-right,  CW
-    {+1.0f, +1.0f, +1.0f},  // 2 rear-left,   CCW
-    {+1.0f, -1.0f, -1.0f},  // 3 front-left,  CW
+    {-1.0f, +1.0f, +1.0f},  // 0 front-right, CCW
+    {-1.0f, -1.0f, -1.0f},  // 1 rear-right,  CW
+    {+1.0f, -1.0f, +1.0f},  // 2 rear-left,   CCW
+    {+1.0f, +1.0f, -1.0f},  // 3 front-left,  CW
 };
 
 float clamp01(float v) {

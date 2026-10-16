@@ -208,7 +208,7 @@ TEST(fc_self_levels_a_roll_disturbance) {
 
     // The right side is down, so recovery means rolling back to the LEFT, which
     // requires more thrust on the right to push that side up. (Mirrors the
-    // pitch case below: nose-up is corrected by more front thrust.)
+    // pitch case below: nose-up is corrected by more rear thrust.)
     const MixerOutput& o = rig.fc.motor_output();
     CHECK(o.motor[FR] > o.motor[FL]);
     CHECK(o.motor[RR] > o.motor[RL]);
@@ -226,10 +226,10 @@ TEST(fc_self_levels_a_pitch_disturbance) {
     rig.run(1500);
 
     CHECK(rig.fc.estimator().euler().pitch > 0.15f);
-    // Nose-up must be corrected by increasing the front motors.
+    // Nose-up must be corrected by pushing the tail up: more thrust at the rear.
     const MixerOutput& o = rig.fc.motor_output();
-    CHECK(o.motor[FL] > o.motor[RL]);
-    CHECK(o.motor[FR] > o.motor[RR]);
+    CHECK(o.motor[RL] > o.motor[FL]);
+    CHECK(o.motor[RR] > o.motor[FR]);
 }
 
 TEST(fc_motor_commands_stay_in_range_under_a_violent_disturbance) {

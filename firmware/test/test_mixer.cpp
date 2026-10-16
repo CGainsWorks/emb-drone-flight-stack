@@ -38,13 +38,16 @@ TEST(mixer_roll_right_lifts_the_left_side) {
     CHECK_NEAR(o.motor[FR], o.motor[RR], 1e-6);
 }
 
-TEST(mixer_pitch_up_lifts_the_rear) {
-    // Positive pitch = nose up, so the rear motors do the work.
+TEST(mixer_pitch_up_lifts_the_front) {
+    // Positive pitch = nose up. Thrust at the front arms raises the nose, so
+    // the front motors speed up and the rear ones slow down. (An earlier
+    // version had this the wrong way round; the software-in-the-loop sim
+    // diverged in pitch within 0.3 s, which is how it was found.)
     const MixerOutput o = mix_quad_x({0.5f, 0.0f, 0.2f, 0.0f});
-    CHECK(o.motor[RL] > 0.5f);
-    CHECK(o.motor[RR] > 0.5f);
-    CHECK(o.motor[FL] < 0.5f);
-    CHECK(o.motor[FR] < 0.5f);
+    CHECK(o.motor[FL] > 0.5f);
+    CHECK(o.motor[FR] > 0.5f);
+    CHECK(o.motor[RL] < 0.5f);
+    CHECK(o.motor[RR] < 0.5f);
 }
 
 TEST(mixer_yaw_right_speeds_up_the_ccw_props) {
@@ -130,10 +133,14 @@ TEST(mixer_combined_command_is_sane) {
         CHECK(o.motor[i] >= 0.0f);
         CHECK(o.motor[i] <= 1.0f);
     }
-    // Rear-left gets +roll +pitch +yaw and must be the highest.
+    // Front-left gets +roll and +pitch (and gives up a little to yaw), so it
+    // must be the highest; rear-right loses on all three and must be lowest.
     for (std::size_t i = 0; i < kMotorCount; ++i) {
-        if (i != RL) {
-            CHECK(o.motor[RL] >= o.motor[i]);
+        if (i != FL) {
+            CHECK(o.motor[FL] >= o.motor[i]);
+        }
+        if (i != RR) {
+            CHECK(o.motor[RR] <= o.motor[i]);
         }
     }
 }
