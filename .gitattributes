@@ -1,6 +1,10 @@
-# Binary and large assets. Install Git LFS before cloning: git lfs install
-*.pdf        filter=lfs diff=lfs merge=lfs -text
-*.xlsx       filter=lfs diff=lfs merge=lfs -text
+# The datasheet-style PDFs and the impedance spreadsheets are stored as ordinary
+# Git blobs. An earlier rule routed them to Git LFS without them ever being
+# migrated, which left every clone showing them as modified. Migrating now
+# would rewrite history, so they stay as blobs and are simply marked binary.
+*.pdf        binary
+*.xlsx       binary
+*.png        binary
 
 # KiCad files are text. Keep them diffable, never treat as binary.
 *.kicad_pcb  text eol=lf
@@ -8,3 +12,11 @@
 *.kicad_pro  text eol=lf
 *.gbr        text eol=lf
 *.drl        text eol=lf
+
+# Generated simulation results and tooling: LF everywhere so CI compares
+# like with like.
+*.csv        text eol=lf
+*.json       text eol=lf
+*.py         text eol=lf
+*.yml        text eol=lf
+*.md         text eol=lf
