@@ -1,0 +1,25 @@
+// FCSTMV1.05 on Renode's stock STM32F4 platform, plus the parts of the board
+// the firmware touches that the stock description leaves out.
+
+using "platforms/cpus/stm32f4.repl"
+
+// The F405 has the FPU and the firmware is built for the hard-float ABI.
+cpu:
+    cpuType: "cortex-m4f"
+
+// TIM2 is the firmware's microsecond clock. On the real board APB1 runs at
+// 42 MHz and the timer clock is doubled to 84 MHz, so PSC = 83 gives 1 MHz.
+timer2:
+    frequency: 84000000
+
+// 64 KB core-coupled RAM, present on the F405 and absent from the stock file.
+ccm: Memory.MappedMemory @ sysbus 0x10000000
+    size: 0x10000
+
+// Simulated ICM-42688-P on the bit-banged SPI lines (see Icm42688BitBang.cs).
+imu: Sensors.Icm42688BitBang @ gpioPortA
+    sdoPort: gpioPortA
+    sdoPin: 7
+
+gpioPortA:
+    [4-7] -> imu@[0-3]

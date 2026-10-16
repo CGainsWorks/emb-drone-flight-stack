@@ -1,0 +1,10 @@
+# Interactive session: renode fcstmv105.resc (run from this directory).
+# The CI test is fc_firmware.robot, which loads the same pieces.
+
+include @Icm42688BitBang.cs
+
+mach create "fcstmv105"
+machine LoadPlatformDescription @fcstmv105.repl
+sysbus LoadELF @../../build-arm/fc_firmware.elf
+
+showAnalyzer sysbus.uart5
