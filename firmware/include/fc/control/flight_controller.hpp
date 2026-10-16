@@ -31,14 +31,20 @@ enum class FlightMode : uint8_t {
 struct FlightControllerConfig {
     FlightMode mode{FlightMode::Angle};
 
+    // Gains below were tuned in software-in-the-loop simulation only
+    // (tools/pid_tuner.py against the assumed airframe in firmware/sim/sil,
+    // nominal and perturbed), then the yaw P term was eased by hand for
+    // overshoot margin. They have never driven a motor; treat them as a
+    // starting point for bench tuning, not as flight-proven values.
+
     // Inner rate-loop gains (per axis).
-    PidGains rate_roll{60.0f, 45.0f, 0.35f};
-    PidGains rate_pitch{60.0f, 45.0f, 0.35f};
-    PidGains rate_yaw{110.0f, 60.0f, 0.0f};
+    PidGains rate_roll{100.0f, 90.0f, 1.35f};
+    PidGains rate_pitch{100.0f, 90.0f, 1.35f};
+    PidGains rate_yaw{130.0f, 33.0f, 0.0f};
     PidLimits rate_limits{150.0f, 500.0f, 80.0f};
 
     // Outer angle-loop gain: rad of error -> rad/s of demanded rate.
-    float angle_p{6.0f};
+    float angle_p{19.5f};
 
     // Stick scaling.
     float max_rate_rad_s{6.0f};      // full stick in Rate mode

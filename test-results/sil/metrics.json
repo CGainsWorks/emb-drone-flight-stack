@@ -1,0 +1,13 @@
+{
+  "simulated": true,
+  "note": "Software-in-the-loop against an assumed plant. Not hardware data.",
+  "gains": {"rate_roll": [100, 90, 1.35], "rate_pitch": [100, 90, 1.35], "rate_yaw": [130, 33, 0], "angle_p": 19.5},
+  "plant": {"mass_kg": 0.65, "arm_m": 0.11, "ixx": 0.0025, "iyy": 0.0025, "izz": 0.0045, "max_thrust_n": 9, "motor_tau_s": 0.03, "hover_command": 0.42079},
+  "scenarios": [
+    {"name": "roll_rate_step", "armed": true, "amplitude": 50.0334, "rise_time_s": 0.021, "overshoot_pct": 4.70323, "settling_time_s": 0.031, "steady_state_error_pct": 3.01752, "settled": true, "bounded": true, "judged_on": "response", "max_estimator_error": 2.52009, "final_true_value": 52.8003, "hover_motor_activity": 0.00414365, "limits": {"max_overshoot_pct": 25, "max_settling_time_s": 0.25, "max_steady_state_error_pct": 5}, "pass": true},
+    {"name": "pitch_rate_step", "armed": true, "amplitude": 52.6466, "rise_time_s": 0.024, "overshoot_pct": 0, "settling_time_s": 0.035, "steady_state_error_pct": 0.232299, "settled": true, "bounded": true, "judged_on": "response", "max_estimator_error": 2.40607, "final_true_value": 51.5049, "hover_motor_activity": 0.00414365, "limits": {"max_overshoot_pct": 25, "max_settling_time_s": 0.25, "max_steady_state_error_pct": 5}, "pass": true},
+    {"name": "yaw_rate_step", "armed": true, "amplitude": 55.5556, "rise_time_s": 0.054, "overshoot_pct": 19.0556, "settling_time_s": 0.205, "steady_state_error_pct": 3.01334, "settled": true, "bounded": true, "judged_on": "response", "max_estimator_error": 1.10585, "final_true_value": 58.9171, "hover_motor_activity": 0.00414365, "limits": {"max_overshoot_pct": 25, "max_settling_time_s": 0.5, "max_steady_state_error_pct": 5}, "pass": true},
+    {"name": "roll_angle_step", "armed": true, "amplitude": 17.4, "rise_time_s": 0.075, "overshoot_pct": 0, "settling_time_s": 0.135, "steady_state_error_pct": 1.0488, "settled": true, "bounded": true, "judged_on": "estimate", "max_estimator_error": 19.0372, "final_true_value": 36.3885, "hover_motor_activity": 0.0041987, "limits": {"max_overshoot_pct": 20, "max_settling_time_s": 1, "max_steady_state_error_pct": 5}, "pass": true},
+    {"name": "pitch_angle_step", "armed": true, "amplitude": 17.5338, "rise_time_s": 0.078, "overshoot_pct": 0, "settling_time_s": 0.156, "steady_state_error_pct": 1.21464, "settled": true, "bounded": true, "judged_on": "estimate", "max_estimator_error": 18.9816, "final_true_value": 36.3051, "hover_motor_activity": 0.0041987, "limits": {"max_overshoot_pct": 20, "max_settling_time_s": 1, "max_steady_state_error_pct": 5}, "pass": true}
+  ]
+}
