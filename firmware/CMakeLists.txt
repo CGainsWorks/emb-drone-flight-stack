@@ -76,11 +76,21 @@ else()
 
   enable_testing()
 
+  # Software-in-the-loop simulator: the portable core closed around a
+  # simulated quadrotor through the same HAL mocks the unit tests use, plus
+  # the host-side sensor models (sim/sensors) the driver tests run against.
+  add_library(fc_sil_lib STATIC sim/sil/quad_plant.cpp sim/sil/sil_harness.cpp)
+  target_include_directories(fc_sil_lib PUBLIC sim/sil sim/sensors test)
+  target_link_libraries(fc_sil_lib PUBLIC fc_core)
+
+  add_executable(fc_sil sim/sil/fc_sil_main.cpp)
+  target_link_libraries(fc_sil PRIVATE fc_sil_lib)
+
   file(GLOB FC_TEST_SOURCES CONFIGURE_DEPENDS test/test_*.cpp)
   foreach(test_src ${FC_TEST_SOURCES})
     get_filename_component(test_name ${test_src} NAME_WE)
     add_executable(${test_name} ${test_src})
-    target_link_libraries(${test_name} PRIVATE fc_core)
+    target_link_libraries(${test_name} PRIVATE fc_core fc_sil_lib)
     target_include_directories(${test_name} PRIVATE test)
     add_test(NAME ${test_name} COMMAND ${test_name})
   endforeach()

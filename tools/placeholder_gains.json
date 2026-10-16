@@ -1,0 +1,7 @@
+{
+ "note": "The untuned placeholder gains the firmware shipped with before simulated tuning. Kept as the reproducible starting point for tools/pid_tuner.py tune --start.",
+ "rate_roll": [60.0, 45.0, 0.35],
+ "rate_pitch": [60.0, 45.0, 0.35],
+ "rate_yaw": [110.0, 60.0, 0.0],
+ "angle_p": 6.0
+}
